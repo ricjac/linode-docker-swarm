@@ -1,0 +1,27 @@
+{
+  "name": "linode",
+  "version": "1.0.0",
+  "description": "Linode automation scripts",
+  "main": "./dist/main.js",
+  "scripts": {
+    "start": "npm run build && npm run exec",
+    "exec": "node ./dist/main.js --harmony",
+    "build": "gulp build",
+    "gulp": "gulp",
+    "tsc": "tsc"
+  },
+  "author": "RJ",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-sourcemaps": "^2.6.0",
+    "gulp-typescript": "^3.2.1",
+    "merge2": "^1.1.0",
+    "typescript": "^2.4.2"
+  },
+  "dependencies": {
+    "@types/request-promise-native": "^1.0.6",
+    "request": "^2.81.0",
+    "request-promise-native": "^1.0.4"
+  }
+}

@@ -1,0 +1,36 @@
+{
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "rootDir": "./src",
+        "sourceRoot": "./src",
+        "declarationDir": "./dist",
+        "mapRoot": "./dist",
+        "outDir": "./dist",
+
+        "module": "commonjs",
+
+        "declaration": true, /* Generates corresponding '.d.ts' file. */
+        "sourceMap": true, /* Generates corresponding '.map' file. */
+        "inlineSourceMap": false,
+        "inlineSources": false,
+
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "removeComments": false,
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": false,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitAny": true,
+        "target": "es2017",
+        "lib": [
+            "es2017"
+        ]
+    }
+}
