@@ -3,6 +3,19 @@ export class Linode {
   label: string;
   region: Region;
   ipv4: string[];
+  distribution: Distribution;
+  status: LinodeStatus;
+}
+
+export enum LinodeStatus {
+  offline,
+  booting,
+  running,
+  shutting_down,
+  rebooting,
+  provisioning,
+  deleting,
+  migrating,
 }
 
 export class Region {
@@ -38,6 +51,10 @@ export class Type {
 export interface LinodeResponse {
   page: number;
   total_results: number;
+}
+
+export interface InstancesResponse extends LinodeResponse {
+  linodes: ReadonlyArray<Linode>
 }
 
 export interface RegionsResponse extends LinodeResponse {
