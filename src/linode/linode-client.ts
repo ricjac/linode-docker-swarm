@@ -49,7 +49,7 @@ export class LinodeClient {
             uri: 'https://api.linode.com/v4/' + resource,
             qs: {},
             headers: {
-                'Authorization': this._token.Value
+                'Authorization': 'Bearer ' + this._token.Value
             },
             //resolveWithFullResponse: true,
             json: true,

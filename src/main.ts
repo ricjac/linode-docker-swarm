@@ -2,7 +2,7 @@ import { LinodeClient } from './linode/linode-client';
 import { LinodeTokenSetting } from './linode/linode-token-setting';
 import { SwarmManager } from './swarm-manager/swarm-manager';
 
-let token = new LinodeTokenSetting("../linode-token.txt")
+let token = new LinodeTokenSetting("./linode-token.txt")
 let linodeApi = new LinodeClient(token);
 
 SetupLinodeSwarm(linodeApi).then(() => {
