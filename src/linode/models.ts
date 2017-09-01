@@ -5,6 +5,7 @@ export class Linode {
   ipv4: string[];
   distribution: Distribution;
   status: LinodeStatus;
+  type: string;
 }
 
 export enum LinodeStatus {
@@ -48,6 +49,13 @@ export class Type {
   class: string;
 }
 
+export class StackScript {
+  id: string;
+  label: string;
+  script: string;
+  distributions: any[]
+}
+
 export interface LinodeResponse {
   page: number;
   total_results: number;
@@ -67,4 +75,8 @@ export interface DistributionsResponse extends LinodeResponse {
 
 export interface TypesResponse extends LinodeResponse {
   types: ReadonlyArray<Type>
+}
+
+export interface StackScriptsResponse extends LinodeResponse {
+  stackscripts: ReadonlyArray<StackScript>
 }

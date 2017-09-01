@@ -1,46 +1,70 @@
 import { ISwarmHealth } from './models'
-import * as Models from '../linode/models'
+import { StackScriptInit } from './stack-script-init'
+import * as LinodeModels from '../linode/models'
 import { LinodeClient } from '../linode/linode-client';
+import { SSHClient } from '../ssh/ssh-client';
 
 function Range(start: number, count: number): number[] {
     return [...Array(count).keys()].map(i => i + start);
 }
 
-export class SwarmManager {
-    private _linodeClient: LinodeClient;
-    private _master: Models.Linode;
-    private _nodes: Set<Models.Linode>;
-    private _swarmToken: string;
+export interface SwarmManagerConfig {
+    linodeClient: LinodeClient,
+    initScript: StackScriptInit,
+    defaultDistroId: string,
+    defaultType: string,
+    defaultRegion: string
+}
 
-    constructor(linodeClient: LinodeClient) {
-        this._linodeClient = linodeClient;
-        this._nodes = new Set<Models.Linode>();
+export class SwarmManager {
+    private _config: SwarmManagerConfig;
+
+    private _master: LinodeModels.Linode;
+    private _nodes: Set<LinodeModels.Linode>;
+    private _swarmToken: string;
+    private _initStackScriptUpdated: boolean = false;
+
+    constructor(config: SwarmManagerConfig
+    ) {
+        this._config = config;
+        this._nodes = new Set<LinodeModels.Linode>();
     }
 
     async AddNodes(numOfNodes: number) {
+        if (!this._initStackScriptUpdated) {
+            let result = await this._config.linodeClient.UpsertStackScript('init', this._config.initScript.Value, [this._config.defaultDistroId])
+            this._initStackScriptUpdated = true;
+        }
+
         for (let value of Range(0, numOfNodes)) {
             await this.AddNode();
         }
     }
 
-    async AddNode(): Promise<Models.Linode> {
+    private async AddNode(): Promise<LinodeModels.Linode> {
         if (!this._master) {
             // Create Master Linode
-            let master = await this._linodeClient.Create();
+            let linode = new LinodeModels.Linode();
+            linode.region = '';
+            linode.type = '';
+            linode.distribution = this._config.defaultDistroId;
+
+
+            let master = await this._config.linodeClient.Create();
             await this.InitSwarm(master);
             this._master = master;
             return master;
         } else {
             // Create Node
-            var node = await this._linodeClient.Create();
+            var node = await this._config.linodeClient.Create();
             await this.JoinSwarm(node);
             this._nodes.add(node);
             return node;
         }
     }
 
-    private async InitSwarm(node: Models.Linode) {
-        let ssh = this._linodeClient.GetSSHClient(node);
+    private async InitSwarm(node: LinodeModels.Linode) {
+        let ssh = new SSHClient(node.ipv4[0]);
         let stdout = await ssh.Exec('docker swarm init');
         if (stdout.includes('Swarm initialized')) {
             let tokenRegex = /(?<=--token\s)(\w.+\w)/;
@@ -56,8 +80,8 @@ export class SwarmManager {
         throw new Error(`Swarm initialise failed: '${stdout}'`);
     }
 
-    private async JoinSwarm(node: Models.Linode) {
-        let ssh = this._linodeClient.GetSSHClient(node);
+    private async JoinSwarm(node: LinodeModels.Linode) {
+        let ssh = new SSHClient(node.ipv4[0]);
         let cmd = `docker swarm join --token ${this._swarmToken} ${this._master.ipv4[0]}:2377`;
         let stdout = await ssh.Exec(cmd);
         if (stdout.includes('This node joined a swarm as a worker')) {
@@ -72,7 +96,7 @@ export class SwarmManager {
             throw new Error('A Swarm does not exist');
         }
 
-        let ssh = this._linodeClient.GetSSHClient(this._master);
+        let ssh = new SSHClient(this._master.ipv4[0]);
         let stdout = await ssh.Exec('docker node ls --format "{ Id:{{.ID}}, HostName: {{.Hostname}}, Status: {{.Status}} . Availability: {{.Availability}} },"');
         let nodeHealth: ISwarmHealth = JSON.parse(`{ Nodes: [${stdout}] }`);
         if (!nodeHealth || !nodeHealth.Nodes || (nodeHealth.Nodes.length == 0 && this._master)) {

@@ -17,35 +17,73 @@ export class LinodeClient {
         return result.linodes;
     }
 
-    async Create() {
-        return new Models.Linode();
+    async Create(linode: Models.Linode) {
+        await this.CallLinodeApi<null>('linode/instances', RestMethod.POST, linode);
     }
 
     async Delete(linode: Models.Linode) {
-        return true;
+        await this.CallLinodeApi<null>(`linode/instances/${linode.id}`, RestMethod.DELETE);
     }
 
-    GetSSHClient(linode: Models.Linode): SSHClient {
-        return new SSHClient();
+    public async GetStackScripts() {
+        let result = await this.CallLinodeApi<Models.StackScriptsResponse>('linode/stackscripts');
+        return result;
     }
 
-    private async Regions() {
+    public async PostStackScript(stackScript: Models.StackScript) {
+        await this.CallLinodeApi<null>('linode/stackscripts', RestMethod.POST, stackScript);
+    }
+
+    public async PutStackScript(stackScript: Models.StackScript) {
+        await this.CallLinodeApi<null>('linode/stackscripts', RestMethod.PUT, stackScript);
+    }
+
+    public async UpsertStackScript(label: string, scriptContent: string, distributionIds: string[]) {
+        let scripts = await this.GetStackScripts();
+        let scriptExists = scripts.stackscripts && scripts.stackscripts.filter(s => s.label == label).length > 0;
+
+        let result: any;
+        if (scriptExists) {
+            let script = scripts.stackscripts.filter(s => s.label == label)[0];
+            script.script = scriptContent;
+            script.distributions = distributionIds;
+
+            result = await this.PutStackScript(script);
+        } else {
+            let stackScript = new Models.StackScript();
+            stackScript.label = label;
+            stackScript.script = scriptContent;
+            stackScript.distributions = distributionIds;
+
+            result = await this.PostStackScript(stackScript);
+        }
+
+        return result;
+    }
+
+    public async Regions() {
         let result = await this.CallLinodeApi<Models.RegionsResponse>('regions');
         return result.regions;
     }
 
-    private async Distributions() {
+    private _distros: Models.Distribution[];
+    public async Distributions() {
         let result = await this.CallLinodeApi<Models.DistributionsResponse>('linode/distributions');
-        return result.distributions.filter(x => x.deprecated == false && x.x64 == true).map(x => x.id);
+        if (!this._distros) {
+            this._distros = result.distributions.filter(x => x.deprecated == false && x.x64 == true);
+        }
+
+        return this._distros;
     }
 
-    private async Types() {
+    public async Types() {
         let result = await this.CallLinodeApi<Models.TypesResponse>('linode/types');
         return result.types.filter(x => x.class == 'standard');
     }
 
-    private async CallLinodeApi<T extends Models.LinodeResponse>(resource: string): Promise<T> {
+    private async CallLinodeApi<T extends Models.LinodeResponse | null>(resource: string, method: RestMethod = RestMethod.GET, body: any = null): Promise<T> {
         let options: (request.UriOptions & rpn.RequestPromiseOptions) | (request.UrlOptions & rpn.RequestPromiseOptions) = {
+            method: RestMethod[method],
             uri: 'https://api.linode.com/v4/' + resource,
             qs: {},
             headers: {
@@ -53,9 +91,17 @@ export class LinodeClient {
             },
             //resolveWithFullResponse: true,
             json: true,
+            //body: JSON.stringify(body)
         };
 
         let result: T = await rpn(options);
         return result;
     }
+}
+
+enum RestMethod {
+    GET,
+    POST,
+    DELETE,
+    PUT
 }
