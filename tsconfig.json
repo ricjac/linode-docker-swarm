@@ -6,11 +6,8 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "rootDir": "./src",
-        "sourceRoot": "./src",
-        "declarationDir": "./dist",
-        "mapRoot": "./dist",
-        "outDir": "./dist",
+        "declarationDir": "dist",
+        "outDir": "dist",
 
         "module": "commonjs",
 

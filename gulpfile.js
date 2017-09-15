@@ -13,7 +13,7 @@ gulp.task('build', function () {
 
     return merge([
         tsResult.js
-            .pipe(sourcemaps.write(tsProject.options.mapRoot))
+            .pipe(sourcemaps.write('.'))
             .pipe(gulp.dest(tsProject.options.outDir)),
         tsResult.dts.pipe(gulp.dest(tsProject.options.declarationDir)),
     ]);

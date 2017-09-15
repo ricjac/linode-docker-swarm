@@ -6,17 +6,11 @@
   "scripts": {
     "start": "npm run build && npm run exec",
     "exec": "node ./dist/main.js --harmony",
-    "build": "gulp build",
-    "gulp": "gulp",
     "tsc": "tsc"
   },
   "author": "RJ",
   "license": "ISC",
   "devDependencies": {
-    "gulp": "^3.9.1",
-    "gulp-sourcemaps": "^2.6.1",
-    "gulp-typescript": "^3.2.2",
-    "merge2": "^1.2.0",
     "typescript": "^2.5.2"
   },
   "dependencies": {

@@ -6,10 +6,9 @@
         {
             "label": "build",
             "type": "npm",
-            "script": "build",
+            "script": "tsc",
             "problemMatcher": [
                 "$tsc",
-                "$gulp-tsc",
                 "$tsc-watch"
             ],
             "group": {
