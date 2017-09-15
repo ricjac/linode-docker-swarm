@@ -12,37 +12,47 @@ export class LinodeClient {
         this._token = token;
     }
 
-    async All() {
-        let result = await this.CallLinodeApi<Models.InstancesResponse>('linode/instances');
+    public async All() {
+        let result = await this.CallLinodeApi<Models.InstancesResponse>({ resource: 'linode/instances', method: RestMethod.GET });
         return result.linodes;
     }
 
-    async Create(linode: Models.Linode) {
-        await this.CallLinodeApi<null>('linode/instances', RestMethod.POST, linode);
+    public async Create(linode: Models.ICreateLinodeRequest) {
+        await this.CallLinodeApi<null>({ resource: 'linode/instances', method: RestMethod.POST, body: linode });
     }
 
-    async Delete(linode: Models.Linode) {
-        await this.CallLinodeApi<null>(`linode/instances/${linode.id}`, RestMethod.DELETE);
+    public async Delete(linode: Models.Linode) {
+        await this.CallLinodeApi<null>({ resource: `linode/instances/${linode.id}`, method: RestMethod.DELETE });
     }
 
     public async GetStackScripts() {
-        let result = await this.CallLinodeApi<Models.StackScriptsResponse>('linode/stackscripts');
-        return result;
+        let response = await this.CallLinodeApi<Models.StackScriptsResponse>({ resource: 'linode/stackscripts', method: RestMethod.GET, filter: { mine: true } });
+        return response;
     }
 
-    public async PostStackScript(stackScript: Models.StackScript) {
-        await this.CallLinodeApi<null>('linode/stackscripts', RestMethod.POST, stackScript);
+    public async PostStackScript(stackScript: Models.StackScript): Promise<Models.StackScript> {
+        let response = await this.CallLinodeApi<Models.StackScript>({ resource: 'linode/stackscripts', method: RestMethod.POST, body: stackScript });
+        return response;
     }
 
-    public async PutStackScript(stackScript: Models.StackScript) {
-        await this.CallLinodeApi<null>('linode/stackscripts', RestMethod.PUT, stackScript);
+    public async PutStackScript(stackScript: Models.StackScript): Promise<Models.StackScript> {
+        let response = await this.CallLinodeApi<Models.StackScript>({
+            resource: `linode/stackscripts/${stackScript.id}`, method: RestMethod.PUT, body: {
+                label: stackScript.label,
+                script: stackScript.script,
+            }
+        });
+
+        return response;
     }
 
-    public async UpsertStackScript(label: string, scriptContent: string, distributionIds: string[]) {
+    public async UpsertStackScript(label: string, scriptContent: string, distributionIds: string[]): Promise<Models.StackScript> {
         let scripts = await this.GetStackScripts();
-        let scriptExists = scripts.stackscripts && scripts.stackscripts.filter(s => s.label == label).length > 0;
+        let scriptExists = scripts.total_results > 0 && scripts.stackscripts && scripts.stackscripts.filter(s => s.label == label).length > 0;
 
-        let result: any;
+        console.log(`The init script exists: ${scriptExists}`)
+
+        let result: Models.StackScript;
         if (scriptExists) {
             let script = scripts.stackscripts.filter(s => s.label == label)[0];
             script.script = scriptContent;
@@ -62,13 +72,13 @@ export class LinodeClient {
     }
 
     public async Regions() {
-        let result = await this.CallLinodeApi<Models.RegionsResponse>('regions');
+        let result = await this.CallLinodeApi<Models.RegionsResponse>({ resource: 'regions', method: RestMethod.GET });
         return result.regions;
     }
 
     private _distros: Models.Distribution[];
     public async Distributions() {
-        let result = await this.CallLinodeApi<Models.DistributionsResponse>('linode/distributions');
+        let result = await this.CallLinodeApi<Models.DistributionsResponse>({ resource: 'linode/distributions', method: RestMethod.GET });
         if (!this._distros) {
             this._distros = result.distributions.filter(x => x.deprecated == false && x.x64 == true);
         }
@@ -77,24 +87,42 @@ export class LinodeClient {
     }
 
     public async Types() {
-        let result = await this.CallLinodeApi<Models.TypesResponse>('linode/types');
+        let result = await this.CallLinodeApi<Models.TypesResponse>({ resource: 'linode/types', method: RestMethod.GET });
         return result.types.filter(x => x.class == 'standard');
     }
 
-    private async CallLinodeApi<T extends Models.LinodeResponse | null>(resource: string, method: RestMethod = RestMethod.GET, body: any = null): Promise<T> {
-        let options: (request.UriOptions & rpn.RequestPromiseOptions) | (request.UrlOptions & rpn.RequestPromiseOptions) = {
-            method: RestMethod[method],
-            uri: 'https://api.linode.com/v4/' + resource,
+    private async CallLinodeApi<T extends Models.LinodeResponse | Models.StackScript | null>(
+        options: {
+            resource?: string,
+            method: RestMethod,
+            body?: any,
+            filter?: any,
+        }
+    ): Promise<T> {
+        let requestOptions: (request.UriOptions & rpn.RequestPromiseOptions) | (request.UrlOptions & rpn.RequestPromiseOptions) = {
+            method: RestMethod[options.method],
+            uri: 'https://api.linode.com/v4/' + options.resource,
             qs: {},
             headers: {
+                'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + this._token.Value
             },
-            //resolveWithFullResponse: true,
             json: true,
-            //body: JSON.stringify(body)
+            //resolveWithFullResponse: true,
         };
 
-        let result: T = await rpn(options);
+        if (options.filter && requestOptions.headers) {
+            requestOptions.headers['X-Filter'] = JSON.stringify(options.filter);
+        }
+
+        if (options.body) {
+            requestOptions.body = options.body
+        }
+
+        console.log(`requestOptions: ${JSON.stringify(requestOptions)}`)
+
+        let result: T = await rpn(requestOptions);
+        console.log(`Response: ${JSON.stringify(result)}`)
         return result;
     }
 }

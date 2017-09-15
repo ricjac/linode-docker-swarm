@@ -1,3 +1,14 @@
+export interface ICreateLinodeRequest {
+  region: string,
+  type: string,
+  label: string,
+  group: string,
+  distribution: string,
+  root_pass: string,
+  root_ssh_key: string,
+  stackscript_id: number
+}
+
 export class Linode {
   id: string;
   label: string;

@@ -20,7 +20,14 @@ SetupLinodeSwarm().then(() => {
 
 async function SetupLinodeSwarm() {
     await DeleteAllLinodes(linodeClient);
-    let swarmManagerConfig: SwarmManagerConfig = {}
+
+    let swarmManagerConfig: SwarmManagerConfig = {
+        linodeClient: linodeClient,
+        initScript: initScript,
+        defaultDistroId: defaultDistroId,
+        defaultType: defaultType,
+        defaultRegion: defaultRegion
+    }
     let swarmManager = new SwarmManager(swarmManagerConfig)
     await swarmManager.AddNodes(2);
 
@@ -33,9 +40,8 @@ async function DeleteAllLinodes(linodeClient: LinodeClient) {
 
     console.log(`Found ${existingLinodes.length} existing Linodes`);
     // Delete existing Linodes
-    existingLinodes.forEach(async linode => {
+    for (var linode of existingLinodes) {
         await linodeClient.Delete(linode);
         console.log(`Deleted Linode ${linode.id}`);
-    });
+    }
 }
-
