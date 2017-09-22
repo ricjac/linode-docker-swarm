@@ -14,11 +14,12 @@ export class LinodeClient {
 
     public async All() {
         let result = await this.CallLinodeApi<Models.InstancesResponse>({ resource: 'linode/instances', method: RestMethod.GET });
-        return result.linodes;
+        return result.data;
     }
 
     public async Create(linode: Models.ICreateLinodeRequest) {
-        await this.CallLinodeApi<null>({ resource: 'linode/instances', method: RestMethod.POST, body: linode });
+        let result = await this.CallLinodeApi<Models.Linode>({ resource: 'linode/instances', method: RestMethod.POST, body: linode });
+        return result;
     }
 
     public async Delete(linode: Models.Linode) {
@@ -48,13 +49,13 @@ export class LinodeClient {
 
     public async UpsertStackScript(label: string, scriptContent: string, distributionIds: string[]): Promise<Models.StackScript> {
         let scripts = await this.GetStackScripts();
-        let scriptExists = scripts.total_results > 0 && scripts.stackscripts && scripts.stackscripts.filter(s => s.label == label).length > 0;
+        let scriptExists = scripts.results > 0 && scripts.data && scripts.data.filter(s => s.label == label).length > 0;
 
         console.log(`The init script exists: ${scriptExists}`)
 
         let result: Models.StackScript;
         if (scriptExists) {
-            let script = scripts.stackscripts.filter(s => s.label == label)[0];
+            let script = scripts.data.filter(s => s.label == label)[0];
             script.script = scriptContent;
             script.distributions = distributionIds;
 
@@ -73,14 +74,14 @@ export class LinodeClient {
 
     public async Regions() {
         let result = await this.CallLinodeApi<Models.RegionsResponse>({ resource: 'regions', method: RestMethod.GET });
-        return result.regions;
+        return result.data;
     }
 
     private _distros: Models.Distribution[];
     public async Distributions() {
         let result = await this.CallLinodeApi<Models.DistributionsResponse>({ resource: 'linode/distributions', method: RestMethod.GET });
         if (!this._distros) {
-            this._distros = result.distributions.filter(x => x.deprecated == false && x.x64 == true);
+            this._distros = result.data.filter(x => x.deprecated == false && x.x64 == true);
         }
 
         return this._distros;
@@ -88,10 +89,10 @@ export class LinodeClient {
 
     public async Types() {
         let result = await this.CallLinodeApi<Models.TypesResponse>({ resource: 'linode/types', method: RestMethod.GET });
-        return result.types.filter(x => x.class == 'standard');
+        return result.data.filter(x => x.class == 'standard');
     }
 
-    private async CallLinodeApi<T extends Models.LinodeResponse | Models.StackScript | null>(
+    private async CallLinodeApi<T>(
         options: {
             resource?: string,
             method: RestMethod,

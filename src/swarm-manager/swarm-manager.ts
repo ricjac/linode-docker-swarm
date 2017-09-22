@@ -55,8 +55,9 @@ export class SwarmManager {
             };
 
             let master = await this._config.linodeClient.Create(linode);
+            this._master = master;
             //await this.InitSwarm(master);
-            //this._master = master;
+
             return this._master;
         } else {
             // TODO: Create Node

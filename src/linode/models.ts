@@ -12,11 +12,18 @@ export interface ICreateLinodeRequest {
 export class Linode {
   id: string;
   label: string;
+  group: string;
   region: Region;
   ipv4: string[];
+  ipv6: string;
   distribution: Distribution;
   status: LinodeStatus;
   type: string;
+  disk: number;
+  transfer_total: number;
+  memory: number;
+  created: Date;
+  updated: Date;
 }
 
 export enum LinodeStatus {
@@ -67,27 +74,14 @@ export class StackScript {
   distributions: any[]
 }
 
-export interface LinodeResponse {
+export interface LinodeResponse<T> {
   page: number;
-  total_results: number;
+  results: number;
+  data: ReadonlyArray<T>;
 }
 
-export interface InstancesResponse extends LinodeResponse {
-  linodes: ReadonlyArray<Linode>
-}
-
-export interface RegionsResponse extends LinodeResponse {
-  regions: ReadonlyArray<Region>
-}
-
-export interface DistributionsResponse extends LinodeResponse {
-  distributions: ReadonlyArray<Distribution>
-}
-
-export interface TypesResponse extends LinodeResponse {
-  types: ReadonlyArray<Type>
-}
-
-export interface StackScriptsResponse extends LinodeResponse {
-  stackscripts: ReadonlyArray<StackScript>
-}
+export interface InstancesResponse extends LinodeResponse<Linode> {}
+export interface RegionsResponse extends LinodeResponse<Region> {}
+export interface DistributionsResponse extends LinodeResponse<Distribution> {}
+export interface TypesResponse extends LinodeResponse<Type> {}
+export interface StackScriptsResponse extends LinodeResponse<StackScript> {}

@@ -4,6 +4,11 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "taskName": "Print Environment variables",
+            "type": "shell",
+            "command": "printenv"
+        },
+        {
             "label": "build",
             "type": "npm",
             "script": "tsc",
