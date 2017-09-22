@@ -41,31 +41,32 @@ export class SwarmManager {
     }
 
     private async AddNode(): Promise<LinodeModels.Linode> {
+        let linode: LinodeModels.ICreateLinodeRequest = {
+            region: this._config.defaultRegion,
+            type: this._config.defaultType,
+            label: '',
+            group: 'Stack1',
+            distribution: this._config.defaultDistroId,
+            root_pass: '3456 rocky ue hash chaste grad',
+            root_ssh_key: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDFMAlNRWAVUMIls3Damv6/uMPfdmRyDJaWh0X/C+jh+mGbRHk5W6S4Fr3z+hiZ4F4PQCSQ0+YZ5pK0UfwU8H21MTcvmggiiR4knvuxS1fvgWe08aiXhPxuySGwTsS8Bq8e8z6HBCmTQjg7SWyThWz3ZqLrfImt9EoeC7lKTugE2Q9Y+w7InXVwkyxPUOinP065Gdr23IcrDXDm2mA2X2h2Hzoqvfk2mOya6wcbTZVCXiM/CznXFh12BMaH/yYaErgQ2Nw27RF1UEidA0cU8VVaSR6O+39AjIZDzZZYlPpfRK29t+IH2CGkPOYFsoyCQtsZXCpxKvGlJ5f9Y7BmyLLufYK3JeQP4UV4VEmybx2RUp3NN59slMuhrZh2qkbY0oLciQeqXYa12QA6wLrKxBkseAeWhj1PV6qZ37hdXpPTB9qsQ9dGKSzuShfmobBzo5+GcOGopkRq/ZWElX5t1nluZMH5PdzsGDpV9lRg/EAqwIgCkSUUfp8T2n98pvgDXXRSl/O5SBnp5qM928R6KnChGJaUu6w6Oq/rcwvmvHpqjfv3efpLXr2rALa2CknZQsrHz0ddw78S5Nplba5vsCUHnsUD13BCIlZDS1wnHr+8HRahX1wTwqa4aLA9RLVmqDmFkLQ8JvOZuip4LY0NFSRvrHlOn0B5UbgT4ryrW/jU7w== rjacquier@console.com.au',
+            stackscript_id: <number>this._initStackScriptId,
+        };
+
         if (!this._master) {
             // Create Master Linode
-            let linode: LinodeModels.ICreateLinodeRequest = {
-                region: this._config.defaultRegion,
-                type: this._config.defaultType,
-                label: 'Master',
-                group: 'Stack1',
-                distribution: this._config.defaultDistroId,
-                root_pass: '3456 rocky ue nazi chaste grad',
-                root_ssh_key: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDFMAlNRWAVUMIls3Damv6/uMPfdmRyDJaWh0X/C+jh+mGbRHk5W6S4Fr3z+hiZ4F4PQCSQ0+YZ5pK0UfwU8H21MTcvmggiiR4knvuxS1fvgWe08aiXhPxuySGwTsS8Bq8e8z6HBCmTQjg7SWyThWz3ZqLrfImt9EoeC7lKTugE2Q9Y+w7InXVwkyxPUOinP065Gdr23IcrDXDm2mA2X2h2Hzoqvfk2mOya6wcbTZVCXiM/CznXFh12BMaH/yYaErgQ2Nw27RF1UEidA0cU8VVaSR6O+39AjIZDzZZYlPpfRK29t+IH2CGkPOYFsoyCQtsZXCpxKvGlJ5f9Y7BmyLLufYK3JeQP4UV4VEmybx2RUp3NN59slMuhrZh2qkbY0oLciQeqXYa12QA6wLrKxBkseAeWhj1PV6qZ37hdXpPTB9qsQ9dGKSzuShfmobBzo5+GcOGopkRq/ZWElX5t1nluZMH5PdzsGDpV9lRg/EAqwIgCkSUUfp8T2n98pvgDXXRSl/O5SBnp5qM928R6KnChGJaUu6w6Oq/rcwvmvHpqjfv3efpLXr2rALa2CknZQsrHz0ddw78S5Nplba5vsCUHnsUD13BCIlZDS1wnHr+8HRahX1wTwqa4aLA9RLVmqDmFkLQ8JvOZuip4LY0NFSRvrHlOn0B5UbgT4ryrW/jU7w== rjacquier@console.com.au',
-                stackscript_id: <number>this._initStackScriptId,
-            };
-
+            linode.label = 'Master';
             let master = await this._config.linodeClient.Create(linode);
             this._master = master;
             //await this.InitSwarm(master);
 
             return this._master;
         } else {
-            // TODO: Create Node
-            // var node = await this._config.linodeClient.Create();
+            linode.label = 'Node';
+            let node = await this._config.linodeClient.Create(linode);
             // await this.JoinSwarm(node);
-            // this._nodes.add(node);
-            // return node;
-            return new LinodeModels.Linode();
+
+            this._nodes.add(node);
+            return node;
         }
     }
 
@@ -106,7 +107,7 @@ export class SwarmManager {
         let stdout = await ssh.Exec('docker node ls --format "{ Id:{{.ID}}, HostName: {{.Hostname}}, Status: {{.Status}} . Availability: {{.Availability}} },"');
         let nodeHealth: ISwarmHealth = JSON.parse(`{ Nodes: [${stdout}] }`);
         if (!nodeHealth || !nodeHealth.Nodes || (nodeHealth.Nodes.length == 0 && this._master)) {
-            throw new Error(`Error retreiving Swarm health: '${stdout}'`);
+            throw new Error(`Error retrieving Swarm health: '${stdout}'`);
         }
 
         return nodeHealth;

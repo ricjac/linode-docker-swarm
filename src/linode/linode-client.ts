@@ -120,10 +120,10 @@ export class LinodeClient {
             requestOptions.body = options.body
         }
 
-        console.log(`requestOptions: ${JSON.stringify(requestOptions)}`)
+        //console.log(`requestOptions: ${JSON.stringify(requestOptions)}`)
 
         let result: T = await rpn(requestOptions);
-        console.log(`Response: ${JSON.stringify(result)}`)
+        //console.log(`Response: ${JSON.stringify(result)}`)
         return result;
     }
 }
