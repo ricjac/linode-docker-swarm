@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "@types/request-promise-native": "^1.0.6",
-    "request": "^2.81.0",
+    "node-ssh": "^5.0.0",
+    "request": "^2.82.0",
     "request-promise-native": "^1.0.4"
   }
 }

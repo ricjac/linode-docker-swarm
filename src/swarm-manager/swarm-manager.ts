@@ -57,13 +57,15 @@ export class SwarmManager {
             linode.label = 'Master';
             let master = await this._config.linodeClient.Create(linode);
             this._master = master;
-            //await this.InitSwarm(master);
+
+            await this.InitSwarm(master);
 
             return this._master;
         } else {
             linode.label = 'Node';
             let node = await this._config.linodeClient.Create(linode);
-            // await this.JoinSwarm(node);
+            
+            await this.JoinSwarm(node);
 
             this._nodes.add(node);
             return node;
